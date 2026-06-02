@@ -707,7 +707,9 @@ const buildSchemaDdl =
         }
     }
 
-export const ydbAdapter = ({ getSql, ...config }: YdbAdapterConfig) => {
+export const ydbAdapter: (
+    config: YdbAdapterConfig,
+) => ReturnType<typeof createAdapterFactory> = ({ getSql, ...config }) => {
     return createAdapterFactory({
         config: {
             adapterId: "ydb-adapter",
