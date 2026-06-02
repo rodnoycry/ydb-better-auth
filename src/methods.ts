@@ -11,13 +11,16 @@ import { buildWhereSql, bindParameters, fetchRows } from "./where.ts"
  * via `executor.begin`) with a `TX` for the COUNT+mutate / UPDATE+SELECT
  * pairs that need to be atomic.
  */
-export const buildAdapterMethods = (
-    executor: Executor,
+export const buildAdapterMethods = ({
+    executor,
+    getFieldAttributes,
+}: {
+    executor: Executor
     getFieldAttributes: (args: {
         model: string
         field: string
-    }) => DBFieldAttribute,
-) => {
+    }) => DBFieldAttribute
+}) => {
     const runSql = (text: string): AnyQuery => executor(text)
     const attributeLookupFor =
         (model: string) =>
@@ -54,7 +57,7 @@ export const buildAdapterMethods = (
             })
             insertQuery.parameter(
                 `p${columnIndex}`,
-                toYdbValue(data[columnName], fieldAttribute),
+                toYdbValue({ value: data[columnName], attr: fieldAttribute }),
             )
         })
         await insertQuery
@@ -70,10 +73,10 @@ export const buildAdapterMethods = (
         where: CleanedWhere[]
         select?: string[]
     }): Promise<T | null> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const selectClause =
             select && select.length > 0
                 ? select.map(quoteIdentifier).join(", ")
@@ -100,10 +103,10 @@ export const buildAdapterMethods = (
         sortBy?: { field: string; direction: "asc" | "desc" }
         offset?: number
     }): Promise<T[]> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const selectClause =
             select && select.length > 0
                 ? select.map(quoteIdentifier).join(", ")
@@ -129,10 +132,10 @@ export const buildAdapterMethods = (
         model: string
         where?: CleanedWhere[]
     }): Promise<number> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const countSql = `SELECT COUNT(*) AS cnt FROM ${quoteIdentifier(model)}${whereClauseSql}`
         const countQuery = runSql(countSql)
         bindParameters(countQuery, params)
@@ -148,12 +151,17 @@ export const buildAdapterMethods = (
      * can't slip between them — `update` wraps us in `executor.begin` if
      * we're not already inside a transaction.
      */
-    const runUpdateAndSelect = async <T>(
-        tx: Executor,
-        model: string,
-        where: CleanedWhere[],
-        updateData: Record<string, unknown>,
-    ): Promise<T | null> => {
+    const runUpdateAndSelect = async <T>({
+        tx,
+        model,
+        where,
+        updateData,
+    }: {
+        tx: Executor
+        model: string
+        where: CleanedWhere[]
+        updateData: Record<string, unknown>
+    }): Promise<T | null> => {
         const columnNames = Object.keys(updateData)
         if (columnNames.length > 0) {
             const setClause = columnNames
@@ -162,10 +170,10 @@ export const buildAdapterMethods = (
                         `${quoteIdentifier(columnName)} = $u${columnIndex}`,
                 )
                 .join(", ")
-            const { sql: whereClauseSql, params } = buildWhereSql(
+            const { sql: whereClauseSql, params } = buildWhereSql({
                 where,
-                attributeLookupFor(model),
-            )
+                getFieldAttribute: attributeLookupFor(model),
+            })
             const updateSql = `UPDATE ${quoteIdentifier(model)} SET ${setClause}${whereClauseSql}`
             const updateQuery: AnyQuery = tx(updateSql)
             columnNames.forEach((columnName, columnIndex) => {
@@ -175,14 +183,20 @@ export const buildAdapterMethods = (
                 })
                 updateQuery.parameter(
                     `u${columnIndex}`,
-                    toYdbValue(updateData[columnName], fieldAttribute),
+                    toYdbValue({
+                        value: updateData[columnName],
+                        attr: fieldAttribute,
+                    }),
                 )
             })
             bindParameters(updateQuery, params)
             await updateQuery
         }
         const { sql: selectWhereClauseSql, params: selectParams } =
-            buildWhereSql(where, attributeLookupFor(model))
+            buildWhereSql({
+                where,
+                getFieldAttribute: attributeLookupFor(model),
+            })
         const selectSql = `SELECT * FROM ${quoteIdentifier(model)}${selectWhereClauseSql} LIMIT 1`
         const selectQuery: AnyQuery = tx(selectSql)
         bindParameters(selectQuery, selectParams)
@@ -201,10 +215,15 @@ export const buildAdapterMethods = (
     }): Promise<T | null> => {
         const data = updateData as Record<string, unknown>
         if (isTx(executor)) {
-            return runUpdateAndSelect<T>(executor, model, where, data)
+            return runUpdateAndSelect<T>({
+                tx: executor,
+                model,
+                where,
+                updateData: data,
+            })
         }
         return await executor.begin(async (tx) =>
-            runUpdateAndSelect<T>(tx, model, where, data),
+            runUpdateAndSelect<T>({ tx, model, where, updateData: data }),
         )
     }
 
@@ -213,16 +232,21 @@ export const buildAdapterMethods = (
      * matching rows first and run the UPDATE in the same transaction to
      * avoid a concurrent writer making the count drift from reality.
      */
-    const runUpdateMany = async (
-        tx: Executor,
-        model: string,
-        where: CleanedWhere[],
-        updateData: Record<string, unknown>,
-    ): Promise<number> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+    const runUpdateMany = async ({
+        tx,
+        model,
+        where,
+        updateData,
+    }: {
+        tx: Executor
+        model: string
+        where: CleanedWhere[]
+        updateData: Record<string, unknown>
+    }): Promise<number> => {
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const countSql = `SELECT COUNT(*) AS cnt FROM ${quoteIdentifier(model)}${whereClauseSql}`
         const countQuery: AnyQuery = tx(countSql)
         bindParameters(countQuery, params)
@@ -248,7 +272,10 @@ export const buildAdapterMethods = (
             })
             updateQuery.parameter(
                 `u${columnIndex}`,
-                toYdbValue(updateData[columnName], fieldAttribute),
+                toYdbValue({
+                    value: updateData[columnName],
+                    attr: fieldAttribute,
+                }),
             )
         })
         bindParameters(updateQuery, params)
@@ -266,10 +293,10 @@ export const buildAdapterMethods = (
         update: Record<string, unknown>
     }): Promise<number> => {
         if (isTx(executor)) {
-            return runUpdateMany(executor, model, where, updateData)
+            return runUpdateMany({ tx: executor, model, where, updateData })
         }
         return await executor.begin(async (tx) =>
-            runUpdateMany(tx, model, where, updateData),
+            runUpdateMany({ tx, model, where, updateData }),
         )
     }
 
@@ -280,10 +307,10 @@ export const buildAdapterMethods = (
         model: string
         where: CleanedWhere[]
     }): Promise<void> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const deleteSql = `DELETE FROM ${quoteIdentifier(model)}${whereClauseSql}`
         const deleteQuery = runSql(deleteSql)
         bindParameters(deleteQuery, params)
@@ -296,10 +323,10 @@ export const buildAdapterMethods = (
         model: string,
         where: CleanedWhere[],
     ): Promise<number> => {
-        const { sql: whereClauseSql, params } = buildWhereSql(
+        const { sql: whereClauseSql, params } = buildWhereSql({
             where,
-            attributeLookupFor(model),
-        )
+            getFieldAttribute: attributeLookupFor(model),
+        })
         const countSql = `SELECT COUNT(*) AS cnt FROM ${quoteIdentifier(model)}${whereClauseSql}`
         const countQuery: AnyQuery = tx(countSql)
         bindParameters(countQuery, params)

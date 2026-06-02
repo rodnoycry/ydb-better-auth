@@ -39,11 +39,15 @@ const escapeLikePattern = (raw: string): string =>
  *   - `mode: "insensitive"` wraps both operands in `String::AsciiToLower(...)`.
  *   - The first clause's connector is ignored (nothing to connect to).
  */
-export const buildWhereSql = (
-    where: readonly CleanedWhere[] | undefined,
-    getFieldAttribute: (field: string) => DBFieldAttribute,
+export const buildWhereSql = ({
+    where,
+    getFieldAttribute,
     paramPrefix = "w",
-): { sql: string; params: ParamMap } => {
+}: {
+    where: readonly CleanedWhere[] | undefined
+    getFieldAttribute: (field: string) => DBFieldAttribute
+    paramPrefix?: string
+}): { sql: string; params: ParamMap } => {
     if (!where || where.length === 0) {
         return { sql: "", params: new Map() }
     }
@@ -78,7 +82,10 @@ export const buildWhereSql = (
             }
             const placeholders = valueList.map((itemValue, itemIndex) => {
                 const paramName = `${paramPrefix}${clauseIndex}_${itemIndex}`
-                params.set(paramName, toYdbValue(itemValue, fieldAttribute))
+                params.set(
+                    paramName,
+                    toYdbValue({ value: itemValue, attr: fieldAttribute }),
+                )
                 return wrapForCase(`$${paramName}`)
             })
             const sqlOperator = operator === "in" ? "IN" : "NOT IN"
@@ -101,7 +108,10 @@ export const buildWhereSql = (
                       ? `${escapedPattern}%`
                       : `%${escapedPattern}`
             const paramName = `${paramPrefix}${clauseIndex}`
-            params.set(paramName, toYdbValue(likePattern, fieldAttribute))
+            params.set(
+                paramName,
+                toYdbValue({ value: likePattern, attr: fieldAttribute }),
+            )
             clauseFragments.push(
                 `${connector}${wrapForCase(columnIdentifier)} LIKE ${wrapForCase(`$${paramName}`)} ESCAPE '\\\\'`,
             )
@@ -121,7 +131,7 @@ export const buildWhereSql = (
                         ? ">="
                         : "="
         const paramName = `${paramPrefix}${clauseIndex}`
-        params.set(paramName, toYdbValue(value, fieldAttribute))
+        params.set(paramName, toYdbValue({ value, attr: fieldAttribute }))
         clauseFragments.push(
             `${connector}${wrapForCase(columnIdentifier)} ${sqlOperator} ${wrapForCase(`$${paramName}`)}`,
         )

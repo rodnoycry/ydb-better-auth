@@ -63,7 +63,13 @@ export const ydbTypeForAttribute = (
  *   3. JSON columns. `fromJs` would build a `Struct` from a plain object,
  *      which doesn't match a `Json` column. We stringify and wrap manually.
  */
-export const toYdbValue = (value: unknown, attr: DBFieldAttribute): Value => {
+export const toYdbValue = ({
+    value,
+    attr,
+}: {
+    value: unknown
+    attr: DBFieldAttribute
+}): Value => {
     const { type } = ydbTypeForAttribute(attr)
     if (value === null || value === undefined) {
         return new Optional(null, type)

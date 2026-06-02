@@ -12,6 +12,8 @@ import { buildSchemaDdl } from "./schema.ts"
 
 export type { YdbAdapterConfig } from "./types.ts"
 
+const DEFAULT_SCHEMA_PATH = "./migrations/schema.yql"
+
 export const ydbAdapter: (
     config: YdbAdapterConfig,
 ) => ReturnType<typeof createAdapterFactory> = ({ getSql, ...config }) => {
@@ -38,7 +40,7 @@ export const ydbAdapter: (
             // host can return the same cached client from getSql() — that's
             // the caller's choice.
             const getMethodsForCall = () =>
-                buildAdapterMethods(getSql(), getFieldAttributes)
+                buildAdapterMethods({ executor: getSql(), getFieldAttributes })
             return {
                 create: (args) => getMethodsForCall().create(args),
                 findOne: (args) => getMethodsForCall().findOne(args),
@@ -49,7 +51,7 @@ export const ydbAdapter: (
                 delete: (args) => getMethodsForCall().delete(args),
                 deleteMany: (args) => getMethodsForCall().deleteMany(args),
                 createSchema: buildSchemaDdl(
-                    config.schemaOutputPath ?? "./migrations/schema.yql",
+                    config.schemaOutputPath ?? DEFAULT_SCHEMA_PATH,
                 ),
             }
         },
