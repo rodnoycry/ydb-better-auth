@@ -1,9 +1,14 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
     "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
     "files": {
         "ignoreUnknown": false,
-        "includes": ["**"]
+        "includes": [
+            "**",
+            "!**/dist/**/*",
+            "!**/build/**/*",
+            "!**/node_modules/**/*"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -17,6 +22,7 @@
         "bracketSpacing": true,
         "includes": [
             "**",
+            "!**/package.json",
             "!**/package-lock.json",
             "!**/node_modules/**/*"
         ]
@@ -25,16 +31,20 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": false,
+            "recommended": true,
             "complexity": { "useArrowFunction": "off" },
-            "correctness": {
-                "noUnusedVariables": "warn",
-                "noUnusedImports": "warn",
-                "noUnusedFunctionParameters": "warn",
-                "useHookAtTopLevel": "error"
-            },
             "style": { "useBlockStatements": "off" },
-            "suspicious": { "noConsole": "error", "noExplicitAny": "error" }
+            "performance": { "noDelete": "error" },
+            "suspicious": {
+                "noConsole": "error",
+                "noExplicitAny": "error",
+                "noTsIgnore": "error",
+                "noDebugger": "error"
+            },
+            "nursery": {
+                "noMisusedPromises": "error",
+                "noFloatingPromises": "error"
+            }
         }
     },
     "javascript": {
