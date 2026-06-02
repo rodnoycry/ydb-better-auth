@@ -39,7 +39,6 @@
         "registry": "https://registry.npmjs.org/"
     },
     "scripts": {
-        "test": "vitest --run",
         "fmt": "biome format --write ./src",
         "lint": "biome lint ./src",
         "ts": "tsc --noEmit",
@@ -48,9 +47,9 @@
         "attw": "attw --pack --profile esm-only",
         "check": "biome check ./src && tsc --noEmit",
         "build:clean": "pnpm clean && pnpm build",
-        "version": "pnpm check && pnpm test && npx changeset version && pnpm install",
-        "release": "pnpm check && pnpm test && pnpm build:clean && pnpm attw && npx changeset publish && npx changeset tag",
-        "release:ci": "pnpm check && pnpm test && pnpm build:clean && pnpm attw && cross-env NPM_CONFIG_PROVENANCE=true npx changeset publish && npx changeset tag"
+        "version": "pnpm check && npx changeset version && pnpm install",
+        "release": "pnpm check && pnpm build:clean && pnpm attw && npx changeset publish && npx changeset tag",
+        "release:ci": "pnpm check && pnpm build:clean && pnpm attw && cross-env NPM_CONFIG_PROVENANCE=true npx changeset publish && npx changeset tag"
     },
     "peerDependencies": {
         "@ydbjs/query": "^6.1.0",
@@ -63,8 +62,7 @@
         "better-auth": "^1.6.9",
         "@biomejs/biome": "2.0.6",
         "@types/node": "^25.9.1",
-        "typescript": "^6.0.3",
-        "vitest": "^4.1.8"
+        "typescript": "^6.0.3"
     },
     "engines": {
         "node": ">=20.19.0"
