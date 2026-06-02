@@ -1,0 +1,11 @@
+# Modules
+node_modules
+
+# Builds
+dist
+target
+build
+
+# Just to be sure
+.env*
+!.env.example

@@ -1,0 +1,74 @@
+{
+    "name": "@rodnoycry/ydb-better-auth",
+    "version": "0.0.1-alpha",
+    "description": "Better Auth adapter for YDB Database",
+    "keywords": [
+        "ydb",
+        "better-auth",
+        "adapter",
+        "typescript"
+    ],
+    "homepage": "https://github.com/rodnoycry/ydb-better-auth#readme",
+    "bugs": {
+        "url": "https://github.com/rodnoycry/ydb-better-auth/issues"
+    },
+    "license": "MIT",
+    "author": "Nikita Leontev <ha1ffa@yandex.ru>",
+    "contributors": [],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rodnoycry/ydb-better-auth.git"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "CHANGELOG.md"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
+    "scripts": {
+        "test": "vitest --run",
+        "fmt": "biome format --write ./src",
+        "lint": "biome lint ./src",
+        "ts": "tsc --noEmit",
+        "clean": "npx rimraf dist",
+        "build": "tsc",
+        "attw": "attw --pack --profile esm-only",
+        "check": "biome check ./src && tsc --noEmit",
+        "build:clean": "pnpm clean && pnpm build",
+        "version": "pnpm check && pnpm test && npx changeset version && pnpm install",
+        "release": "pnpm check && pnpm test && pnpm build:clean && pnpm attw && npx changeset publish && npx changeset tag",
+        "release:ci": "pnpm check && pnpm test && pnpm build:clean && pnpm attw && cross-env NPM_CONFIG_PROVENANCE=true npx changeset publish && npx changeset tag"
+    },
+    "peerDependencies": {
+        "@ydbjs/query": "^6.1.0",
+        "@ydbjs/value": "^6.0.0",
+        "better-auth": "^1.6.9"
+    },
+    "devDependencies": {
+        "@ydbjs/query": "^6.1.0",
+        "@ydbjs/value": "^6.0.0",
+        "better-auth": "^1.6.9",
+        "@biomejs/biome": "2.0.6",
+        "@types/node": "^25.9.1",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.8"
+    },
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "packageManager": "pnpm@10.26.1",
+    "engineStrict": true
+}
