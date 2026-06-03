@@ -1,6 +1,6 @@
 {
     "name": "@rodnoycry/ydb-better-auth",
-    "version": "0.0.1-alpha",
+    "version": "0.0.1",
     "description": "Better Auth adapter for YDB Database",
     "keywords": [
         "ydb",
@@ -57,6 +57,7 @@
         "better-auth": "^1.6.9"
     },
     "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.3",
         "@biomejs/biome": "2.4.16",
         "@changesets/cli": "^2.31.0",
         "@types/node": "^25.9.1",
