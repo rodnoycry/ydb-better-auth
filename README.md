@@ -32,7 +32,7 @@ export const auth = betterAuth({
 })
 ```
 
-## FaaS (serverless) usage
+## FaaS usage
 
 YDB's [official guidance for serverless environments](https://github.com/ydb-platform/ydb-js-sdk/tree/main/examples/sls#readme) is to not reuse a `Driver` between invocations. The adapter supports this through the `getSql` callback — it is called on every adapter method invocation, so you can return a request-scoped client each time:
 
