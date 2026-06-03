@@ -1,10 +1,3 @@
-/**
- * YDB adapter for better-auth.
- *
- * For the architecture overview, type-mapping table, design rationale, and
- * intentional limitations, see the sibling ADAPTER.md.
- */
-
 import { createAdapterFactory } from "better-auth/adapters"
 import type { YdbAdapterConfig } from "./types.ts"
 import { buildAdapterMethods } from "./methods.ts"
