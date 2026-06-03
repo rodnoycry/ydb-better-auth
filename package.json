@@ -58,6 +58,7 @@
     },
     "devDependencies": {
         "@biomejs/biome": "2.4.16",
+        "@changesets/cli": "^2.31.0",
         "@types/node": "^25.9.1",
         "@ydbjs/query": "^6.1.0",
         "@ydbjs/value": "^6.0.0",
